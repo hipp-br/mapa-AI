@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prontidão para IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Mesmo padrão visual do diagnóstico de operação. Identidade HIPP, tema escuro. */
+:root{
+  --bg:#0A1628; --card:#11253C; --card2:#17304B; --line:#223A52; --line2:#30506E;
+  --fg:#FFFFFF; --muted:#AFC3CF; --dim:#7B8E9D;
+  --teal:#4FBFA8; --yel:#E6E03D; --coral:#E8845A;
+  --display:'Archivo','Arial Narrow',Arial,sans-serif;
+  --body:'IBM Plex Sans',-apple-system,'Segoe UI',Arial,sans-serif;
+  --mono:'IBM Plex Mono','Consolas',monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6;margin:0}
+.wrap{max-width:700px;margin:0 auto;padding-block:32px 72px;padding-left:18px;padding-right:18px}
+
+.brand{display:flex;align-items:center;gap:9px;margin-bottom:30px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--yel);flex:none}
+.brand b{font-weight:600;letter-spacing:.03em;font-size:15px}
+
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--teal);
+  text-transform:uppercase;margin:0 0 12px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(27px,5.6vw,38px);line-height:1.14;
+  margin:0 0 18px;text-wrap:balance;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--teal)}
+.lead{color:var(--muted);margin:0 0 14px;font-size:15.5px}
+.meta{font-family:var(--mono);font-size:12px;color:var(--dim);margin:0 0 34px;line-height:1.7}
+
+.sec{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:24px 20px;margin-bottom:18px}
+.secnum{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--dim);
+  text-transform:uppercase;display:block;margin-bottom:7px}
+.sectitle{font-family:var(--display);font-weight:600;font-size:19px;line-height:1.3;
+  display:block;margin-bottom:6px}
+.secnote{color:var(--dim);font-size:13.5px;margin:0 0 24px;line-height:1.55}
+
+.q{margin-bottom:24px}
+.q:last-child{margin-bottom:0}
+.q > label,.q > .qt{display:block;font-weight:500;font-size:15px;margin-bottom:6px;line-height:1.45}
+.hint{color:var(--dim);font-size:13px;line-height:1.5;margin:0 0 10px}
+.req{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;color:var(--teal);
+  text-transform:uppercase;font-weight:400;margin-left:7px;vertical-align:1px}
+input.ruim,select.ruim{border-color:var(--coral)}
+.chips.ruim .chip span{border-color:var(--coral)}
+.msg{color:var(--coral);font-size:13px;margin:7px 0 0;line-height:1.45}
+input[type=text],select,textarea{
+  display:block;width:100%;background:var(--card2);color:var(--fg);border:1px solid var(--line2);
+  border-radius:9px;padding:12px 13px;font-family:var(--body);font-size:15px;line-height:1.4}
+input::placeholder,textarea::placeholder{color:#64798A}
+textarea{min-height:96px;resize:vertical;line-height:1.55}
+select{appearance:none;padding-right:42px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 20px) 52%,calc(100% - 15px) 52%;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+.chips{display:flex;flex-wrap:wrap;gap:9px}
+.chips.col{flex-direction:column}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;width:0;height:0}
+.chip span{display:block;cursor:pointer;border:1px solid var(--line2);background:var(--card2);
+  border-radius:999px;padding:9px 15px;font-size:14px;color:var(--muted);user-select:none;line-height:1.35}
+.chips.col .chip span{border-radius:10px;padding:11px 15px}
+.chip input:checked + span{border-color:var(--teal);color:var(--fg);background:#16413E}
+.chip input:focus-visible + span{outline:2px solid var(--teal);outline-offset:2px}
+
+.actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+button{font-family:var(--body);font-size:15px;font-weight:600;border-radius:9px;cursor:pointer;
+  border:1px solid transparent;padding:14px 24px;line-height:1.2}
+.primary{background:var(--teal);color:#06211C}
+.ghost{background:transparent;color:var(--muted);border-color:var(--line2)}
+.err{color:var(--coral);font-size:14px;flex-basis:100%}
+
+/* ---- resultado ---- */
+#out{margin-top:34px}
+.laudo{background:var(--card);border:1px solid var(--teal);border-radius:14px;padding:26px 20px}
+.laudo h2{font-family:var(--display);font-weight:700;font-size:clamp(22px,4.6vw,29px);
+  line-height:1.2;margin:0 0 14px;text-wrap:balance}
+.laudo h2 em{font-style:normal;color:var(--teal)}
+.sub{color:var(--muted);font-size:14.5px;margin:0 0 24px;line-height:1.6}
+
+.niveis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 26px}
+.nv{border:1px solid var(--line2);border-radius:10px;padding:12px 10px;text-align:center;background:transparent}
+.nv .k{font-family:var(--mono);font-size:10px;letter-spacing:.13em;color:var(--dim);text-transform:uppercase;display:block}
+.nv .n{font-family:var(--display);font-weight:600;font-size:15px;color:var(--dim);display:block;margin-top:4px}
+.nv.on{border-color:var(--teal);background:#16413E}
+.nv.on .k{color:var(--teal)}
+.nv.on .n{color:var(--fg)}
+
+h3{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--teal);
+  text-transform:uppercase;font-weight:400;margin:32px 0 12px}
+
+.painel{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:18px 16px}
+.barra{margin-bottom:14px}
+.barra:last-of-type{margin-bottom:0}
+.barra .t{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px}
+.barra .n{color:var(--muted);font-size:13.5px}
+.barra .q{font-family:var(--mono);font-size:13px;color:var(--fg);font-variant-numeric:tabular-nums;margin:0}
+.trilho{height:9px;border-radius:5px;background:#0C1E33;overflow:hidden}
+.trilho i{display:block;height:100%;border-radius:5px;background:var(--teal)}
+.trilho i.low{background:var(--coral)}
+.rem{border-top:1px solid var(--line);margin-top:16px;padding-top:14px;
+  color:var(--muted);font-size:13.5px;line-height:1.55}
+.rem b{color:var(--fg)}
+
+.roteiro{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.roteiro li{background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--teal);
+  border-radius:10px;padding:16px 18px}
+.roteiro li.first{border-color:var(--teal);border-left-width:3px}
+.rn{font-family:var(--mono);font-size:10px;letter-spacing:.13em;color:var(--teal);text-transform:uppercase;display:block;margin-bottom:6px}
+.rt{font-family:var(--display);font-weight:600;font-size:16.5px;line-height:1.35;margin-bottom:6px}
+.rp{color:var(--muted);font-size:14px;line-height:1.55}
+
+ul.faz{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+ul.faz li{color:var(--muted);font-size:14px;line-height:1.55;padding-left:14px;position:relative}
+ul.faz li::before{content:'';position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:50%;background:var(--teal)}
+ul.faz b{font-family:var(--display);font-weight:600;color:var(--fg);font-size:14.5px}
+
+.prem{color:var(--muted);font-size:14px;line-height:1.6;margin:0}
+
+.ok{background:#16413E;border:1px solid var(--teal);border-radius:11px;padding:18px;margin-top:22px}
+.ok .t{font-family:var(--display);font-weight:600;font-size:17px;color:var(--teal);margin-bottom:5px}
+.ok p{color:var(--muted);font-size:14px;margin:0}
+.falha{background:#3B2A18;border:1px solid var(--coral);border-radius:11px;padding:18px;margin-top:22px}
+.falha .t{font-family:var(--display);font-weight:600;font-size:17px;color:var(--coral);margin-bottom:5px}
+.falha p{color:#F0DCCB;font-size:14px;margin:0 0 14px;line-height:1.55}
+#dump{min-height:210px;font-family:var(--mono);font-size:12px;line-height:1.55;
+  background:#0B1B2E;border-color:var(--line2)}
+.status{font-family:var(--mono);font-size:12px;color:var(--dim);margin:0}
+
+footer{color:var(--dim);font-size:11.5px;font-family:var(--mono);margin-top:40px;
+  border-top:1px solid var(--line);padding-top:18px;line-height:1.7}
+@media (max-width:420px){
+  .sec{padding:20px 16px}
+  .laudo{padding:22px 16px}
+  .nv .n{font-size:13.5px}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="brand"><span class="dot"></span><b>HIPP</b></div>
+
+  <p class="eyebrow">Diagnóstico de prontidão</p>
+  <h1>Onde a sua empresa está com IA, e <em>qual é o primeiro passo.</em></h1>
+  <p class="lead">Perguntas sobre como a empresa funciona hoje, não sobre tecnologia. Serve para qualquer setor. No fim você vê em que nível está, onde a empresa trava e por onde faz sentido começar.</p>
+  <p class="meta">Cerca de 4 minutos<br>Não precisa entender de IA para responder<br>Responda pelo que acontece de verdade, não pelo que deveria acontecer</p>
+
+  <form id="f" novalidate>
+
+    <div class="sec">
+      <span class="secnum">Bloco 1 de 5</span>
+      <span class="sectitle">Quem está respondendo</span>
+      <p class="secnote">O resultado vai com o seu nome. Depois a gente conversa sobre ele com você.</p>
+
+      <div class="q">
+        <label for="quemresp">Nome <span class="req">obrigatório</span></label>
+        <input type="text" id="quemresp" placeholder="Seu nome" autocomplete="name">
+      </div>
+      <div class="q">
+        <label for="cargo">Cargo <span class="req">obrigatório</span></label>
+        <input type="text" id="cargo" placeholder="Ex: diretor, sócio, gerente de operações" autocomplete="organization-title">
+      </div>
+      <div class="q">
+        <label for="empresa">Empresa <span class="req">obrigatório</span></label>
+        <input type="text" id="empresa" placeholder="Nome da empresa" autocomplete="organization">
+      </div>
+      <div class="q">
+        <label for="email">E-mail <span class="req">obrigatório</span></label>
+        <input type="text" id="email" placeholder="voce@empresa.com.br" autocomplete="email" inputmode="email">
+      </div>
+      <div class="q">
+        <label for="fone">WhatsApp <span class="req">obrigatório</span></label>
+        <p class="hint">Com DDD. É por aqui que mandamos o resultado detalhado.</p>
+        <input type="text" id="fone" placeholder="(51) 99999-9999" autocomplete="tel" inputmode="tel">
+      </div>
+    </div>
+
+    <div class="sec">
+      <span class="secnum">Bloco 2 de 5</span>
+      <span class="sectitle">A empresa</span>
+      <p class="secnote">Serve para ajustar os exemplos e o formato da recomendação ao tamanho de vocês.</p>
+
+      <div class="q">
+        <label for="setor">Setor <span class="req">obrigatório</span></label>
+        <select id="setor">
+          <option value="">Escolha</option>
+          <option value="supermercado">Supermercado, atacado ou rede de mercados</option>
+          <option value="varejo">Varejo ou rede de lojas</option>
+          <option value="industria">Indústria</option>
+          <option value="servicos">Serviços</option>
+          <option value="agro">Agronegócio</option>
+          <option value="saude">Saúde</option>
+          <option value="construcao">Construção e imobiliário</option>
+          <option value="logistica">Logística e transporte</option>
+          <option value="educacao">Educação</option>
+          <option value="tecnologia">Tecnologia</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+      <div class="q">
+        <label for="func">Quantos funcionários? <span class="req">obrigatório</span></label>
+        <select id="func">
+          <option value="">Escolha</option>
+          <option value="1">Até 20</option>
+          <option value="2">21 a 50</option>
+          <option value="3">51 a 200</option>
+          <option value="4">201 a 500</option>
+          <option value="5">501 a 1.000</option>
+          <option value="6">Mais de 1.000</option>
+        </select>
+      </div>
+      <div class="q">
+        <label for="fat">Faturamento anual, em média <span class="req">obrigatório</span></label>
+        <select id="fat">
+          <option value="">Escolha</option>
+          <option value="ate5">Até R$ 5 milhões</option>
+          <option value="5a20">R$ 5 a 20 milhões</option>
+          <option value="20a50">R$ 20 a 50 milhões</option>
+          <option value="50a100">R$ 50 a 100 milhões</option>
+          <option value="100a300">R$ 100 a 300 milhões</option>
+          <option value="mais300">Mais de R$ 300 milhões</option>
+          <option value="nao_informa">Prefiro não informar</option>
+        </select>
+      </div>
+      <div class="q">
+        <label for="und">Quantas unidades? <span class="req">obrigatório</span></label>
+        <p class="hint">Lojas, fábricas, filiais, centros de distribuição.</p>
+        <select id="und">
+          <option value="">Escolha</option>
+          <option value="1">Uma só</option>
+          <option value="2">2 a 5</option>
+          <option value="3">6 a 20</option>
+          <option value="4">Mais de 20</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sec">
+      <span class="secnum">Bloco 3 de 5</span>
+      <span class="sectitle">Como a empresa funciona hoje</span>
+      <p class="secnote">Oito perguntas. Todas obrigatórias, porque é delas que sai o nível.</p>
+      <div id="perguntas"></div>
+    </div>
+
+    <div class="sec">
+      <span class="secnum">Bloco 4 de 5</span>
+      <span class="sectitle">Onde dói</span>
+      <p class="secnote">Opcional, mas é o que deixa a recomendação com a cara da sua empresa.</p>
+
+      <div class="q">
+        <span class="qt">Em quais áreas o time perde mais tempo com tarefa repetitiva?</span>
+        <p class="hint">Marque até três.</p>
+        <div class="chips" id="areas"></div>
+      </div>
+      <div class="q">
+        <label for="dor">Qual tarefa, se sumisse amanhã, mais aliviaria a operação?</label>
+        <textarea id="dor" placeholder="Ex: fechar o relatório de vendas toda segunda, responder pedido no WhatsApp"></textarea>
+      </div>
+    </div>
+
+    <div class="sec">
+      <span class="secnum">Bloco 5 de 5</span>
+      <span class="sectitle">Ajude a melhorar o diagnóstico</span>
+      <p class="secnote">Opcional.</p>
+      <div class="q">
+        <label for="fb">Alguma pergunta ficou confusa ou faltou perguntar algo?</label>
+        <textarea id="fb" placeholder="Diga qual e por quê."></textarea>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="primary" id="go">Enviar e ver meu resultado</button>
+      <span class="err" id="formerr" hidden></span>
+    </div>
+  </form>
+
+  <div id="out" hidden></div>
+
+  <footer>HIPP &middot; contato@hipp.com.br</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ------------------------------------------------------------------
+     Destino dos dados. Mesmo Apps Script do diagnóstico de operação.
+     Todo envio sai com tipo: 'prontidao_ia' para separar na planilha.
+     ------------------------------------------------------------------ */
+  var DESTINO = 'https://script.google.com/macros/s/AKfycbzIIk7friJz_sZE75YMTPdEKFycNOT3dXJO622_TKwEO1ss6X7LOv1iQoHlGcfmzoBc/exec';
+  var TIPO = 'prontidao_ia';
+
+  /* ---- perguntas pontuadas: cada opção vale de 0 a 3 ---- */
+  var PERG = [
+    { id:'uso', pilar:'uso', t:'Hoje, como as pessoas da empresa usam IA?', o:[
+      'Ninguém usa, ou não sabemos',
+      'Algumas pessoas usam por conta própria, no ChatGPT ou parecido',
+      'Alguns times usam com combinados de como e para quê',
+      'Faz parte de processos definidos da empresa' ]},
+    { id:'ferr', pilar:'uso', t:'A empresa já paga por alguma ferramenta de IA?', o:[
+      'Não',
+      'Só assinaturas individuais, cada um a sua',
+      'Uma ferramenta contratada para um time ou área',
+      'Ferramentas ligadas aos sistemas da empresa' ]},
+    { id:'tent', pilar:'uso', t:'Já tentaram algum projeto com IA? O que aconteceu?', o:[
+      'Nunca tentamos',
+      'Tentamos e não deu em nada',
+      'Funcionou em algo pontual',
+      'Funcionou e estamos expandindo' ]},
+    { id:'proc', pilar:'processo', t:'Os processos da empresa estão escritos?', o:[
+      'Vivem na cabeça das pessoas',
+      'Alguns, em documentos soltos',
+      'Os principais estão documentados',
+      'Documentados e revisados com frequência' ]},
+    { id:'mao', pilar:'processo', t:'Quanto do trabalho repetitivo ainda é feito na mão?', o:[
+      'Quase tudo',
+      'Mais da metade',
+      'Menos da metade',
+      'Pouca coisa' ]},
+    { id:'dados', pilar:'dados', t:'Onde estão os dados do dia a dia?', o:[
+      'Em planilhas espalhadas e papel',
+      'Num sistema de gestão, mas pouco usado para analisar',
+      'Num ERP, com relatórios que a gente consulta',
+      'Integrados, e usados para tomar decisão' ]},
+    { id:'dono', pilar:'lideranca', t:'Quem decide sobre tecnologia na empresa?', o:[
+      'Ninguém definido, o dono quando dá tempo',
+      'Uma pessoa de TI que cuida dos sistemas',
+      'Um responsável com orçamento para isso',
+      'A liderança, com metas de tecnologia' ]},
+    { id:'lid', pilar:'lideranca', t:'Como a diretoria enxerga IA hoje?', o:[
+      'Não é prioridade agora',
+      'Curiosidade, sem plano',
+      'Quer usar, mas não sabe por onde começar',
+      'Tem plano e prazo definidos' ]}
+  ];
+
+  var PILARES = [
+    { id:'uso',       nome:'Uso de IA',         trava:'O uso de IA ainda é pequeno ou isolado. O que existe depende de iniciativa individual.' },
+    { id:'processo',  nome:'Processo',          trava:'Os processos vivem na cabeça das pessoas. Sem processo claro, a IA não tem onde se apoiar e o ganho não se repete.' },
+    { id:'dados',     nome:'Dados',             trava:'O dado está espalhado. A IA trabalha em cima do dado que a empresa tem, então isso limita tudo o que vem depois.' },
+    { id:'lideranca', nome:'Liderança e dono',  trava:'Falta alguém com mandato para puxar o tema. Sem dono, vira projeto de uma pessoa só e morre quando ela sai.' }
+  ];
+
+  var AREAS = [
+    { id:'atendimento', nome:'Atendimento ao cliente' },
+    { id:'vendas',      nome:'Vendas e propostas' },
+    { id:'financeiro',  nome:'Financeiro e cobrança' },
+    { id:'compras',     nome:'Compras e estoque' },
+    { id:'rh',          nome:'RH e recrutamento' },
+    { id:'relatorios',  nome:'Relatórios e indicadores' },
+    { id:'marketing',   nome:'Marketing e conteúdo' },
+    { id:'operacao',    nome:'Operação e produção' },
+    { id:'juridico',    nome:'Contratos e documentos' }
+  ];
+
+  /* exemplo padrão por área, vale para qualquer setor */
+  var EX = {
+    atendimento:'responder as perguntas que se repetem e passar para uma pessoa só o que precisa de decisão',
+    vendas:'montar proposta a partir do modelo e do histórico, e preparar a reunião com o que já se sabe do cliente',
+    financeiro:'conciliar extrato, conferir nota e cobrar o atrasado com mensagem no tom da empresa',
+    compras:'comparar cotação, acompanhar prazo de entrega e avisar a falta de produto antes dela acontecer',
+    rh:'triar currículo contra o perfil da vaga e organizar a integração de quem entra',
+    relatorios:'fechar o relatório da semana com o número de cada sistema e apontar só o que fugiu do normal',
+    marketing:'produzir o conteúdo da semana a partir do que a empresa já fala, sem começar do zero',
+    operacao:'transformar o procedimento que vive na cabeça de quem sabe em passo a passo que qualquer um segue',
+    juridico:'ler contrato e apontar a cláusula fora do padrão antes de assinar'
+  };
+
+  /* exemplo por setor, na ordem em que costuma fazer mais diferença */
+  var SETOR = {
+    supermercado:{ nome:'supermercado e atacado', ex:{
+      compras:'prever reposição por loja com o histórico de venda, reduzindo ruptura e perda de perecível',
+      relatorios:'comparar as lojas entre si toda segunda e mostrar quem saiu da curva',
+      marketing:'montar o encarte e a oferta da semana a partir do estoque',
+      atendimento:'responder pedido e dúvida de cliente no WhatsApp de cada loja' }},
+    varejo:{ nome:'varejo', ex:{
+      compras:'ajustar compra e transferência entre lojas pelo giro de cada uma',
+      atendimento:'atender no WhatsApp e no site com o catálogo e o estoque reais',
+      vendas:'treinar vendedor novo com o roteiro de quem mais vende' }},
+    industria:{ nome:'indústria', ex:{
+      operacao:'registrar parada e não conformidade por voz no chão de fábrica e virar relatório sozinho',
+      compras:'acompanhar fornecedor e prazo de entrega, e avisar o atraso antes de parar a linha',
+      relatorios:'consolidar o indicador de produção de cada turno sem planilha manual',
+      vendas:'responder pedido de cotação técnica com base no catálogo e na tabela' }},
+    servicos:{ nome:'serviços', ex:{
+      vendas:'qualificar o contato que chega e preparar proposta no padrão da casa',
+      operacao:'documentar a entrega para o serviço não depender de uma pessoa só',
+      financeiro:'acompanhar contrato, reajuste e cobrança recorrente' }},
+    agro:{ nome:'agronegócio', ex:{
+      operacao:'registrar apontamento de campo por voz e consolidar por talhão',
+      compras:'comparar cotação de insumo e acompanhar a entrega na janela certa',
+      relatorios:'juntar dado de máquina, clima e colheita num resumo da semana' }},
+    saude:{ nome:'saúde', ex:{
+      atendimento:'confirmar agenda, reduzir falta e responder a dúvida frequente de paciente',
+      financeiro:'conferir guia e glosa de convênio antes de faturar',
+      operacao:'padronizar protocolo e checklist de cada setor' }},
+    construcao:{ nome:'construção', ex:{
+      compras:'comparar orçamento de material e acompanhar entrega por obra',
+      operacao:'transformar o diário de obra falado em relatório com foto e pendência',
+      juridico:'conferir contrato de empreiteiro e a documentação exigida' }},
+    logistica:{ nome:'logística', ex:{
+      operacao:'acompanhar entrega e avisar o cliente do atraso antes dele ligar',
+      financeiro:'conferir o frete cobrado contra a tabela e o contrato',
+      relatorios:'fechar o indicador de prazo e ocorrência por rota' }},
+    educacao:{ nome:'educação', ex:{
+      atendimento:'responder família e aluno sobre matrícula, prazo e documento',
+      operacao:'preparar material e avaliação a partir do plano de aula',
+      financeiro:'acompanhar inadimplência com régua de cobrança' }},
+    tecnologia:{ nome:'tecnologia', ex:{
+      atendimento:'resolver o chamado de primeiro nível com a base de conhecimento',
+      vendas:'preparar demonstração e proposta com o caso do cliente',
+      operacao:'documentar o código e o processo que só uma pessoa entende' }},
+    outro:{ nome:'', ex:{} }
+  };
+
+  var NIVEIS = {
+    iniciante:{ nome:'Iniciante', idx:0,
+      leitura:'A empresa ainda usa IA de forma solta, quando usa. Antes de qualquer ferramenta, falta saber onde a IA muda o jogo no seu negócio. Comprar ferramenta antes disso costuma virar assinatura esquecida.',
+      passos:[
+        { t:'Mentoria de direção com a liderança', p:'Encontros com o dono e a liderança para escolher os dois ou três pontos onde IA faz diferença no seu negócio, e deixar de lado os que não valem o esforço agora.' },
+        { t:'Treinamento do time', p:'O time aprende a usar IA no trabalho dele, com os casos da própria empresa, e não com exemplo genérico de internet.' },
+        { t:'Primeiro processo rodando', p:'Um processo escolhido sai da cabeça das pessoas, vira passo a passo escrito e passa a rodar com IA. É a prova de que funciona aí dentro.' } ]},
+    intermediario:{ nome:'Intermediário', idx:1,
+      leitura:'Já tem gente usando IA, mas cada um do seu jeito. O ganho fica preso em quem usa e some quando essa pessoa sai ou tira férias.',
+      passos:[
+        { t:'Treinamento do time', p:'Transformar o uso individual em jeito da empresa: mesmos combinados, mesmos cuidados, e os bons usos espalhados para todo mundo.' },
+        { t:'Mentoria para priorizar', p:'Escolher com a liderança os processos que valem ser redesenhados primeiro, olhando tempo gasto e risco de erro.' },
+        { t:'Processos com IA dentro', p:'Os processos escolhidos ficam documentados, e a IA passa a fazer parte deles, em vez de ser atalho de alguém.' } ]},
+    avancado:{ nome:'Avançado', idx:2,
+      leitura:'A empresa já usa IA com algum método. O próximo passo não é usar mais, é redesenhar a operação em volta do que ficou possível.',
+      passos:[
+        { t:'Mentoria executiva', p:'Trabalho com a liderança para redesenhar a operação: o que a máquina faz, o que a pessoa decide e como medir o resultado.' },
+        { t:'Formação de multiplicadores', p:'Pessoas-chave de cada área preparadas para levar o método adiante sem depender de apoio externo.' },
+        { t:'Medição do ganho', p:'Medir o ganho de cada processo redesenhado, para decidir com número onde investir na sequência.' } ]}
+  };
+
+  /* ---------------- monta o formulário ---------------- */
+  var box = document.getElementById('perguntas');
+  box.innerHTML = PERG.map(function(q){
+    return '<div class="q" data-q="' + q.id + '"><span class="qt">' + q.t + ' <span class="req">obrigatório</span></span>' +
+      '<div class="chips col" id="g_' + q.id + '">' + q.o.map(function(txt, i){
+        return '<label class="chip"><input type="radio" name="' + q.id + '" value="' + i + '"><span>' + txt + '</span></label>';
+      }).join('') + '</div></div>';
+  }).join('');
+
+  document.getElementById('areas').innerHTML = AREAS.map(function(a){
+    return '<label class="chip"><input type="checkbox" value="' + a.id + '"><span>' + a.nome + '</span></label>';
+  }).join('');
+  /* limita a três áreas */
+  document.getElementById('areas').addEventListener('change', function(e){
+    var marc = document.querySelectorAll('#areas input:checked');
+    if (marc.length > 3) e.target.checked = false;
+  });
+
+  var f = document.getElementById('f'), out = document.getElementById('out'), err = document.getElementById('formerr');
+  function t(id){ return document.getElementById(id).value.trim(); }
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function txtSel(id){ var s = document.getElementById(id); return s.selectedIndex > 0 ? s.options[s.selectedIndex].text : ''; }
+
+  function coletar(){
+    var resp = {}, respTxt = {};
+    PERG.forEach(function(q){
+      var r = document.querySelector('input[name="' + q.id + '"]:checked');
+      resp[q.id] = r ? Number(r.value) : null;
+      respTxt[q.id] = r ? q.o[Number(r.value)] : '';
+    });
+    var areas = [];
+    Array.prototype.forEach.call(document.querySelectorAll('#areas input:checked'), function(i){ areas.push(i.value); });
+    return {
+      tipo: TIPO,
+      quemResp: t('quemresp'), cargo: t('cargo'), empresa: t('empresa'), email: t('email'), telefone: t('fone'),
+      setor: t('setor'), setorTxt: txtSel('setor'),
+      funcionarios: t('func'), funcionariosTxt: txtSel('func'),
+      faturamento: t('fat'), faturamentoTxt: txtSel('fat'),
+      unidades: t('und'), unidadesTxt: txtSel('und'),
+      pontos: resp, respostas: respTxt,
+      areas: areas, dor: t('dor'), feedback: t('fb')
+    };
+  }
+
+  /* ---------------- cálculo ---------------- */
+  function calcular(d){
+    var total = 0, porPilar = {};
+    PILARES.forEach(function(p){ porPilar[p.id] = { soma:0, max:0 }; });
+    PERG.forEach(function(q){
+      var v = d.pontos[q.id] || 0;
+      total += v;
+      porPilar[q.pilar].soma += v;
+      porPilar[q.pilar].max += 3;
+    });
+    var pct = {};
+    PILARES.forEach(function(p){ pct[p.id] = Math.round(100 * porPilar[p.id].soma / porPilar[p.id].max); });
+
+    /* 0 a 24 pontos */
+    var nivel = total <= 9 ? 'iniciante' : (total <= 17 ? 'intermediario' : 'avancado');
+    /* processo na cabeça das pessoas segura o nível: não dá para pular essa etapa */
+    if (nivel === 'avancado' && d.pontos.proc === 0) nivel = 'intermediario';
+
+    var menor = PILARES.slice().sort(function(a, b){ return pct[a.id] - pct[b.id]; })[0];
+    return { total: total, pct: pct, nivel: nivel, trava: menor };
+  }
+
+  function exemplos(d){
+    var s = SETOR[d.setor] || SETOR.outro, lista = [];
+    d.areas.forEach(function(a){ lista.push(a); });
+    Object.keys(s.ex).forEach(function(a){ if (lista.length < 3 && lista.indexOf(a) < 0) lista.push(a); });
+    ['relatorios','atendimento','operacao'].forEach(function(a){ if (lista.length < 3 && lista.indexOf(a) < 0) lista.push(a); });
+    return lista.slice(0, 3).map(function(a){
+      var nome = AREAS.filter(function(x){ return x.id === a; })[0].nome;
+      return { area: nome, txt: s.ex[a] || EX[a] };
+    });
+  }
+
+  function formato(d){
+    var fz = Number(d.funcionarios), un = Number(d.unidades), L = [];
+    if (fz <= 2) L.push('Com o tamanho de vocês, dá para envolver a liderança e o time inteiro de uma vez. Isso acelera, porque ninguém fica de fora do jeito novo.');
+    else if (fz === 3) L.push('Com esse tamanho, o caminho mais rápido é começar por um grupo de 10 a 15 pessoas-chave, que depois viram referência para o resto.');
+    else L.push('Com esse tamanho, o treinamento começa por uma ou duas áreas, de preferência as que você marcou, e expande a partir do resultado delas.');
+    if (un >= 2) L.push('Como a empresa tem mais de uma unidade, vale incluir alguém de cada uma desde o começo, para o jeito novo não ficar só na sede.');
+    return L;
+  }
+
+  /* ---------------- resultado ---------------- */
+  function render(d, r){
+    var N = NIVEIS[r.nivel], exs = exemplos(d), fmt = formato(d);
+    var s = SETOR[d.setor] || SETOR.outro;
+    var nomeEmp = d.empresa ? esc(d.empresa) : 'A sua empresa';
+
+    out.innerHTML =
+      '<div class="laudo">' +
+        '<p class="eyebrow">Seu resultado</p>' +
+        '<h2>' + nomeEmp + ' está no nível <em>' + N.nome + '</em>.</h2>' +
+        '<p class="sub">' + N.leitura + '</p>' +
+
+        '<div class="niveis">' + ['iniciante','intermediario','avancado'].map(function(k, i){
+          return '<div class="nv' + (k === r.nivel ? ' on' : '') + '"><span class="k">Nível ' + (i + 1) +
+            '</span><span class="n">' + NIVEIS[k].nome + '</span></div>';
+        }).join('') + '</div>' +
+
+        '<h3>Onde a empresa trava</h3>' +
+        '<div class="painel">' + PILARES.map(function(p){
+          var v = r.pct[p.id];
+          return '<div class="barra"><div class="t"><span class="n">' + p.nome + '</span><span class="q">' + v + '%</span></div>' +
+            '<div class="trilho"><i class="' + (p.id === r.trava.id ? 'low' : '') + '" style="width:' + Math.max(3, v) + '%"></i></div></div>';
+        }).join('') +
+          '<p class="rem"><b>' + r.trava.nome + '.</b> ' + r.trava.trava + '</p>' +
+        '</div>' +
+
+        '<h3>Por onde começar</h3>' +
+        '<ol class="roteiro">' + N.passos.map(function(p, i){
+          return '<li' + (i === 0 ? ' class="first"' : '') + '><span class="rn">Passo ' + (i + 1) + (i === 0 ? ' · comece por aqui' : '') + '</span>' +
+            '<div class="rt">' + p.t + '</div><div class="rp">' + p.p + '</div></li>';
+        }).join('') + '</ol>' +
+        '<p class="prem" style="margin-top:14px">' + fmt.map(esc).join(' ') + '</p>' +
+
+        '<h3>Onde a IA costuma entrar primeiro' + (s.nome ? ' em ' + s.nome : '') + '</h3>' +
+        '<ul class="faz">' + exs.map(function(x){
+          return '<li><b>' + x.area + '.</b> ' + x.txt.charAt(0).toUpperCase() + x.txt.slice(1) + '.</li>';
+        }).join('') + '</ul>' +
+        (d.dor ? '<p class="prem" style="margin-top:14px">E a tarefa que você citou, <b style="color:var(--fg)">"' + esc(d.dor) +
+          '"</b>, é por onde a gente começa a conversa.</p>' : '') +
+
+        '<h3>Como o nível foi definido</h3>' +
+        '<p class="prem">Cada uma das oito perguntas do bloco 3 vale de 0 a 3 pontos. Até 9 pontos é iniciante, de 10 a 17 é intermediário, e de 18 a 24 é avançado. ' +
+          'Quando os processos ainda vivem na cabeça das pessoas, o nível fica no máximo em intermediário, porque essa etapa não dá para pular. ' +
+          'Você fez <b style="color:var(--fg)">' + r.total + ' de 24</b>.</p>' +
+
+        '<div class="actions" style="margin-top:28px">' +
+          '<button type="button" class="ghost" id="again">Refazer</button>' +
+        '</div>' +
+        '<div id="desfecho"><div class="ok"><div class="t">Recebemos</div>' +
+          '<p>Vamos falar com você pelo WhatsApp informado para conversar sobre este resultado.</p></div></div>' +
+      '</div>';
+
+    out.hidden = false;
+    out.scrollIntoView({ behavior:'smooth', block:'start' });
+    document.getElementById('again').addEventListener('click', function(){
+      out.hidden = true; window.scrollTo({ top:0, behavior:'smooth' });
+    });
+  }
+
+  /* ---------------- envio ---------------- */
+  var SESSAO = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+  function pacote(d, r){
+    return {
+      id: SESSAO, tipo: TIPO, criadoEm: new Date().toISOString(),
+      respostas: d,
+      resultado: {
+        nivel: NIVEIS[r.nivel].nome, pontos: r.total, trava: r.trava.nome,
+        uso: r.pct.uso, processo: r.pct.processo, dados: r.pct.dados, lideranca: r.pct.lideranca,
+        comecarPor: NIVEIS[r.nivel].passos[0].t
+      }
+    };
+  }
+
+  function textoParaCopiar(d, r){
+    var L = [];
+    L.push('DIAGNÓSTICO DE PRONTIDÃO · ' + (d.empresa || 'sem nome'));
+    L.push('Respondido por: ' + d.quemResp + (d.cargo ? ', ' + d.cargo : ''));
+    L.push('E-mail: ' + d.email + ' | WhatsApp: ' + d.telefone);
+    L.push('Setor: ' + d.setorTxt + ' | Funcionários: ' + d.funcionariosTxt);
+    L.push('Faturamento: ' + d.faturamentoTxt + ' | Unidades: ' + d.unidadesTxt);
+    L.push('');
+    L.push('RESULTADO: ' + NIVEIS[r.nivel].nome + ' (' + r.total + ' de 24)');
+    L.push('Trava em: ' + r.trava.nome);
+    PILARES.forEach(function(p){ L.push('  ' + p.nome + ': ' + r.pct[p.id] + '%'); });
+    L.push('Começar por: ' + NIVEIS[r.nivel].passos[0].t);
+    L.push('');
+    L.push('RESPOSTAS');
+    PERG.forEach(function(q){ L.push('  ' + q.t + ' ' + d.respostas[q.id]); });
+    L.push('  Áreas: ' + (d.areas.join(', ') || 'nenhuma marcada'));
+    if (d.dor) L.push('  Tarefa que mais aliviaria: ' + d.dor);
+    if (d.feedback) L.push('  Feedback: ' + d.feedback);
+    return L.join('\n');
+  }
+
+  function mostrarFalha(d, r){
+    var bx = document.getElementById('desfecho');
+    if (!bx) return;
+    bx.innerHTML =
+      '<div class="falha"><div class="t">O resultado acima está certo, mas não consegui registrar aqui</div>' +
+        '<p>Nada se perdeu. Copie o texto abaixo e mande para a HIPP, que vale exatamente o mesmo.</p>' +
+        '<textarea id="dump" readonly></textarea>' +
+        '<div class="actions" style="margin-top:12px"><button type="button" class="primary" id="copiar">Copiar texto</button>' +
+        '<span class="status" id="cst"></span></div></div>';
+    var ta = document.getElementById('dump');
+    ta.value = textoParaCopiar(d, r);
+    document.getElementById('copiar').addEventListener('click', function(){
+      var cst = document.getElementById('cst');
+      var fb = function(){ ta.focus(); ta.select(); cst.textContent = 'Texto selecionado. Use Ctrl+C ou Cmd+C.'; };
+      try { navigator.clipboard.writeText(ta.value).then(function(){ cst.textContent = 'Copiado.'; }, fb); }
+      catch (e) { fb(); }
+    });
+  }
+
+  function enviar(carga, aoFalhar){
+    try {
+      fetch(DESTINO, { method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify(carga) }).catch(function(){ if (aoFalhar) aoFalhar(); });
+    } catch (e) { if (aoFalhar) aoFalhar(); }
+  }
+
+  /* ---------------- validação ---------------- */
+  var OBRIG = [
+    { id:'quemresp', nome:'seu nome' }, { id:'cargo', nome:'seu cargo' },
+    { id:'empresa', nome:'a empresa' }, { id:'email', nome:'o e-mail' }, { id:'fone', nome:'o WhatsApp' },
+    { id:'setor', nome:'o setor' }, { id:'func', nome:'o número de funcionários' },
+    { id:'fat', nome:'o faturamento' }, { id:'und', nome:'o número de unidades' }
+  ];
+
+  /* grava só a identificação, uma vez, assim que ela estiver completa */
+  var parcialEnviada = false, parcialAgendada = null;
+  function enviarParcial(){
+    if (parcialEnviada || parcialAgendada) return;
+    var vazio = OBRIG.slice(0, 5).some(function(c){ return !t(c.id); });
+    if (vazio) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(t('email'))) return;
+    if (t('fone').replace(/\D/g, '').length < 10) return;
+    parcialAgendada = setTimeout(function(){
+      parcialAgendada = null;
+      if (parcialEnviada) return;
+      parcialEnviada = true;
+      enviar({ id: SESSAO, tipo: TIPO, parcial: true, criadoEm: new Date().toISOString(), respostas: coletar() });
+    }, 10000);
+  }
+
+  function marcar(el, texto){
+    el.classList.add('ruim');
+    var alvo = el.closest('.q');
+    var m = alvo.querySelector('.msg');
+    if (!m) { m = document.createElement('p'); m.className = 'msg'; alvo.appendChild(m); }
+    m.textContent = texto;
+  }
+  function limpar(el){
+    el.classList.remove('ruim');
+    var m = el.closest('.q').querySelector('.msg');
+    if (m) m.parentNode.removeChild(m);
+  }
+
+  OBRIG.forEach(function(c){
+    var el = document.getElementById(c.id);
+    el.addEventListener('input', function(){ limpar(el); });
+    el.addEventListener('change', function(){ limpar(el); });
+    el.addEventListener('blur', enviarParcial);
+  });
+  PERG.forEach(function(q){
+    var g = document.getElementById('g_' + q.id);
+    g.addEventListener('change', function(){ limpar(g); });
+  });
+
+  function validar(){
+    var primeiro = null;
+    OBRIG.forEach(function(c){
+      var el = document.getElementById(c.id);
+      limpar(el);
+      if (!el.value.trim()) { marcar(el, 'Preencha ' + c.nome + ' para continuar.'); if (!primeiro) primeiro = el; }
+    });
+    var em = document.getElementById('email');
+    if (em.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em.value.trim())) {
+      marcar(em, 'Esse e-mail parece incompleto. Confira antes de seguir.'); if (!primeiro) primeiro = em;
+    }
+    var fo = document.getElementById('fone');
+    if (fo.value.trim() && fo.value.replace(/\D/g, '').length < 10) {
+      marcar(fo, 'Coloque o número com DDD.'); if (!primeiro) primeiro = fo;
+    }
+    PERG.forEach(function(q){
+      var g = document.getElementById('g_' + q.id);
+      limpar(g);
+      if (!document.querySelector('input[name="' + q.id + '"]:checked')) {
+        marcar(g, 'Escolha uma opção.'); if (!primeiro) primeiro = g;
+      }
+    });
+    return primeiro;
+  }
+
+  f.addEventListener('submit', function(e){
+    e.preventDefault();
+    var ruim = validar();
+    if (ruim) {
+      err.textContent = 'Faltou responder algumas perguntas. Elas estão marcadas em laranja.';
+      err.hidden = false;
+      ruim.scrollIntoView({ behavior:'smooth', block:'center' });
+      return;
+    }
+    err.hidden = true;
+    var d = coletar(), r = calcular(d);
+    render(d, r);
+    if (parcialAgendada) { clearTimeout(parcialAgendada); parcialAgendada = null; }
+    parcialEnviada = true;
+    enviar(pacote(d, r), function(){ mostrarFalha(d, r); });
+  });
+})();
+</script>
+</body>
+</html>
